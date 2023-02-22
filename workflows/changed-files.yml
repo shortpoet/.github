@@ -1,0 +1,54 @@
+---
+on:
+  workflow_call:
+    outputs:
+      all:
+        description: 'List of changed files'
+        value: ${{ jobs.changed-files.outputs.all }}
+      tf:
+        description: 'List of changed Terraform files'
+        value: ${{ jobs.changed-files.outputs.tf }}
+      yml:
+        description: 'List of changed YAML files'
+        value: ${{ jobs.changed-files.outputs.yml }}
+
+jobs:
+  changed-files:
+    runs-on: ubuntu-latest
+    # Map a step output to a job output
+    outputs:
+      all: ${{ steps.changes.outputs.all }}
+      tf: ${{ steps.changes.outputs.tf }}
+      yml: ${{ steps.changes.outputs.yml }}
+    steps:
+        # Make sure we have some code to diff.
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+          # fetch-depth: 0
+      - name: Get changed files
+        id: changes
+        # Set outputs using the command.
+        # Set outputs using the command.
+        # echo "::set-output name=all::$(git diff --name-only --diff-filter=ACMRT ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | xargs)"
+        # echo "::set-output name=tf::$(git diff --name-only --diff-filter=ACMRT ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep .tf$ | xargs)"
+        # echo "::set-output name=yml::$(git diff --name-only --diff-filter=ACMRT ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep .yml$ | xargs)"
+        run: |
+          echo "all=$(git diff --name-only --diff-filter=ACMRT ${{ github.event.after }} ${{ github.event.before }} | xargs)" >> $GITHUB_OUTPUT
+          echo "tf=$(git diff --name-only --diff-filter=ACMRT ${{ github.event.after }} ${{ github.event.before }} | grep .tf$ | xargs)" >> $GITHUB_OUTPUT
+          echo "yml=$(git diff --name-only --diff-filter=ACMRT ${{ github.event.after }} ${{ github.event.before }} | grep .yml$ | xargs)" >> $GITHUB_OUTPUT
+  lint:
+    runs-on: ubuntu-latest
+    # require the first job to have ran
+    needs: changed-files
+    # only run there are changed files
+    if: |
+      ${{ needs.changed-files.outputs.tf != '' }} ||
+      ${{ needs.changed-files.outputs.yml != '' }}
+    steps:
+      - name: echo changed files
+        run: |
+          echo ${{ needs.changed-files.outputs.all }}
+          echo ${{ needs.changed-files.outputs.tf }}
+          echo ${{ needs.changed-files.outputs.yml }}
