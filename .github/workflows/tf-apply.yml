@@ -41,6 +41,7 @@ jobs:
       TF_IN_AUTOMATION: true
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       PLAN_TITLE: "${{ inputs.infra_type }} Infra"
+      THIS_REPO: ${{ github.repository }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3.3.0
@@ -71,12 +72,12 @@ jobs:
       - name: Download Artifact - GH CLI
         if: inputs.gh_environment == 'uat'
         run: |
-          OTHER_REPO="shortpoet/tf-web"
+          REPO="shortpoet/$THIS_REPO"
           WF_NAME="$PLAN_TITLE"
           BRANCH='uat'
           ARTIFACT_NAME="$BRANCH"
-          RUN_ID=$(gh run --repo "${OTHER_REPO}" list --workflow "${WF_NAME}" --branch "${BRANCH}" --json databaseId --jq '.[0].databaseId')
-          gh run --repo "${OTHER_REPO}" download "${RUN_ID}" -n "${ARTIFACT_NAME}"
+          RUN_ID=$(gh run --repo "${REPO}" list --workflow "${WF_NAME}" --branch "${BRANCH}" --json databaseId --jq '.[0].databaseId')
+          gh run --repo "${REPO}" download "${RUN_ID}" -n "${ARTIFACT_NAME}"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
