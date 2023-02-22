@@ -41,7 +41,6 @@ jobs:
       TF_IN_AUTOMATION: true
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       PLAN_TITLE: "${{ inputs.infra_type }} Infra"
-      THIS_REPO: ${{ github.repository }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3.3.0
@@ -60,6 +59,8 @@ jobs:
           role-duration-seconds: 1200
 
       - name: Download Artifact
+        env:
+          THIS_REPO: ${{ github.repository }}
         if: inputs.gh_environment != 'uat'
         uses: actions/download-artifact@v3.0.2
         with:
@@ -72,7 +73,7 @@ jobs:
       - name: Download Artifact - GH CLI
         if: inputs.gh_environment == 'uat'
         run: |
-          REPO="shortpoet/$THIS_REPO"
+          REPO="$THIS_REPO"
           WF_NAME="$PLAN_TITLE"
           BRANCH='uat'
           ARTIFACT_NAME="$BRANCH"
