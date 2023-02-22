@@ -34,6 +34,7 @@ on:
 
 jobs:
   plan:
+    name: plan-${{ inputs.gh_environment }}
     runs-on: ubuntu-latest
     # leaving this here makes the plan stage require approval
     # environment: ${{ inputs.gh_environment }}
