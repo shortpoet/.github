@@ -1,0 +1,28 @@
+---
+name: 'Changed Files'
+description: 'Greet someone'
+outputs:
+  all:
+    description: 'List of changed files'
+    value: ${{ steps.changes.outputs.all }}
+  tf:
+    description: 'List of changed Terraform files'
+    value: ${{ steps.changes.outputs.tf }}
+  yml:
+    description: 'List of changed YAML files'
+    value: ${{ steps.changes.outputs.yml }}
+runs:
+  using: "composite"
+  steps:
+      # Make sure we have some code to diff.
+    - name: Checkout repository
+      uses: actions/checkout@v3
+      with:
+        fetch-depth: 2
+    - name: Get changed files
+      id: changes
+      shell: bash
+      run: |
+        echo "all=$(git diff --name-only --diff-filter=ACMRT ${{ github.event.after }} ${{ github.event.before }} | xargs)" >> $GITHUB_OUTPUT
+        echo "tf=$(git diff --name-only --diff-filter=ACMRT ${{ github.event.after }} ${{ github.event.before }} | grep .tf$ | xargs)" >> $GITHUB_OUTPUT
+        echo "yml=$(git diff --name-only --diff-filter=ACMRT ${{ github.event.after }} ${{ github.event.before }} | grep .yml$ | xargs)" >> $GITHUB_OUTPUT
