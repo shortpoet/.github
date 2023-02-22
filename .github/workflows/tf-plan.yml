@@ -20,7 +20,7 @@ on:
         description: 'Specifies the GitHub deployment environment.'
         required: false
         type: string
-        default: null
+        # default: null
       enable_TFSEC:
         description: '(Optional) Enables TFSEC IaC scans and code quality checks on Terraform configurations'
         required: false
@@ -56,7 +56,7 @@ jobs:
       - name: AWS Credentials
         # uses: ./.github/actions/aws-creds
         # uses: shortpoet/tf-web/.github/actions/aws-creds@main
-        uses: shortpoet/.github/actions/aws-creds@main
+        uses: shortpoet/.github/.github/actions/aws-creds@main
         if: ${{ inputs.provider == 'aws' }}
         with:
           aws-profile: ${{ vars.AWS_PROFILE }}
