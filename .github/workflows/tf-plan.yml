@@ -41,6 +41,11 @@ on:
         required: false
         type: string
         default: 'build'
+      build_artifact_uuid:
+        description: 'Specifies the UUID of the build artifact.'
+        required: false
+        type: string
+        default: 'build'
 
 jobs:
   plan:
@@ -65,20 +70,24 @@ jobs:
         uses: actions/checkout@v3.3.0
       
       - name: Download Build Artifact
-        if: ${{ inputs.build_path != '' }}
+        if: ${{ inputs.build_path != '' }} && ${{ inputs.gh_environment != 'uat' }}
         uses: actions/download-artifact@v2
         with:
-          name: "build-${{ github.sha }}-${{ github.ref_name }}"
+          name: ${{ inputs.build_artifact_uuid }}
+          path: ${{ inputs.build_path }}
+
+      - name: Download Build Artifact - UAT
+        if: ${{ inputs.build_path != '' }} && ${{ inputs.gh_environment == 'uat' }}
+        uses: actions/download-artifact@v2
+        with:
+          name: ${{ inputs.build_artifact_uuid }}
           path: ${{ inputs.build_path }}
 
       - name: Decompress Build artifact
         if: ${{ inputs.build_path != '' }}
         working-directory: ${{ inputs.build_path }}
         run: |
-          unzip ${{ inputs.build_artifact }}.zip
-          pwd
-          ls -la
-          ls -la ../
+          unzip "${{ inputs.build_artifact }}".zip
 
       - name: AWS Credentials
         # uses: ./.github/actions/aws-creds
