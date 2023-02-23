@@ -35,6 +35,11 @@ on:
         required: false
         type: string
         default: 'build'
+      build_artifact_uuid:
+        description: 'Specifies the UUID of the build artifact.'
+        required: false
+        type: string
+        default: 'build'
 
 jobs:
   apply:
@@ -88,14 +93,14 @@ jobs:
         if: ${{ inputs.build_path != '' }} && ${{ inputs.gh_environment != 'uat' }}
         uses: actions/download-artifact@v2
         with:
-          name: "build-${{ github.sha }}-${{ github.ref_name }}"
+          name: $${{ inputs.build_artifact_uuid }}
           path: ${{ inputs.build_path }}
 
       - name: Download Build Artifact - UAT
         if: ${{ inputs.build_path != '' }} && ${{ inputs.gh_environment == 'uat' }}
         uses: actions/download-artifact@v2
         with:
-          name: "build-${{ github.sha }}-${{ github.head_ref }}"
+          name: $${{ inputs.build_artifact_uuid }}
           path: ${{ inputs.build_path }}
 
       - name: Decompress Build artifact

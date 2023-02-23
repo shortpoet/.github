@@ -25,6 +25,11 @@ on:
         required: false
         type: string
         default: 'build'
+      build_artifact_uuid:
+        description: 'Specifies the UUID of the build artifact.'
+        required: false
+        type: string
+        default: 'build'
 
 permissions:
   contents: read
@@ -67,9 +72,10 @@ jobs:
       provider: ${{ inputs.provider }}
       gh_environment: 'dev'
       path: ${{ inputs.base_path }}/envs/dev
-      plan-title: "AWS ${{ inputs.gh_environment }} ${{ inputs.infra_type }} plan"
+      plan-title: "AWS Dev ${{ inputs.infra_type }} plan"
       build_path: ${{ inputs.build_path }}
       build_artifact: ${{ inputs.build_artifact }}
+      build_artifact_uuid: ${{ inputs.build_artifact_uuid }}
 
   apply-dev:
     if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
@@ -83,6 +89,7 @@ jobs:
       infra_type: ${{ inputs.infra_type }}
       build_path: ${{ inputs.build_path }}
       build_artifact: ${{ inputs.build_artifact }}
+      build_artifact_uuid: ${{ inputs.build_artifact_uuid }}
 
   plan-uat:
     if: |
@@ -97,7 +104,7 @@ jobs:
       provider: ${{ inputs.provider }}
       gh_environment: 'uat'
       path: ${{ inputs.base_path }}/envs/uat
-      plan-title: "AWS ${{ inputs.gh_environment }} ${{ inputs.infra_type }} plan"
+      plan-title: "AWS UAT ${{ inputs.infra_type }} plan"
       build_path: ${{ inputs.build_path }}
       build_artifact: ${{ inputs.build_artifact }}
 
@@ -115,6 +122,7 @@ jobs:
       infra_type: ${{ inputs.infra_type }}
       build_path: ${{ inputs.build_path }}
       build_artifact: ${{ inputs.build_artifact }}
+      build_artifact_uuid: ${{ inputs.build_artifact_uuid }}
 
   plan-prod:
     if: |
@@ -128,7 +136,7 @@ jobs:
       provider: ${{ inputs.provider }}
       gh_environment: 'prod'
       path: ${{ inputs.base_path }}/envs/prod
-      plan-title: "AWS ${{ inputs.gh_environment }} ${{ inputs.infra_type }} plan"
+      plan-title: "AWS Prod ${{ inputs.infra_type }} plan"
       build_path: ${{ inputs.build_path }}
       build_artifact: ${{ inputs.build_artifact }}
 
@@ -147,3 +155,4 @@ jobs:
       infra_type: ${{ inputs.infra_type }}
       build_path: ${{ inputs.build_path }}
       build_artifact: ${{ inputs.build_artifact }}
+      build_artifact_uuid: ${{ inputs.build_artifact_uuid }}
