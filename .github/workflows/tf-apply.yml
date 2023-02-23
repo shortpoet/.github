@@ -67,7 +67,7 @@ jobs:
       # can't be any ambiguity in the name of the artifact or workflow
       # a duplicate name will cause the download to fail
       # if you create a new workflow with the same name (but diff file?), you'll need to delete the old one (and all runs)
-      - name: Download Artifact - GH CLI
+      - name: Download Terraform Artifact - UAT
         if: inputs.gh_environment == 'uat'
         run: |
           REPO="$THIS_REPO"
