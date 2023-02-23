@@ -25,6 +25,11 @@ on:
         description: 'Specifies the type of deployment. Used for plan title.'
         required: true
         type: string
+      build_path:
+        description: 'Specifies the path of the build artifact.'
+        required: false
+        type: string
+        default: 'build'
 
 jobs:
   apply:
@@ -45,20 +50,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3.3.0
 
-      - name: AWS Credentials
-        # uses: ./.github/actions/aws-creds
-        # uses: shortpoet/tf-web/.github/actions/aws-creds@main
-        uses: shortpoet/.github/.github/actions/aws-creds@main
-        if: ${{ inputs.provider == 'aws' }}
-        with:
-          aws-profile: ${{ vars.AWS_PROFILE }}
-          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-          aws-region: ${{ vars.AWS_DEFAULT_REGION }}
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          role-duration-seconds: 1200
-
-      - name: Download Artifact
+      - name: Download Terraform Artifact
         env:
           THIS_REPO: ${{ github.repository }}
         if: inputs.gh_environment != 'uat'
@@ -86,6 +78,32 @@ jobs:
         run: |
           rm .terraform.lock.hcl
           unzip "${{ inputs.gh_environment }}".zip
+
+      - name: Download Build Artifact
+        if: ${{ inputs.build_path != '' }}
+        uses: actions/download-artifact@v2
+        with:
+          name: "build-${{ github.sha }}-${{ github.ref_name }}"
+          path: ${{ inputs.build_path }}
+
+      - name: Decompress Build artifact
+        if: ${{ inputs.build_path != '' }}
+        working-directory: ${{ inputs.build_path }}
+        run: |
+          unzip "build-${{ github.sha }}-${{ github.ref_name }}"
+
+      - name: AWS Credentials
+        # uses: ./.github/actions/aws-creds
+        # uses: shortpoet/tf-web/.github/actions/aws-creds@main
+        uses: shortpoet/.github/.github/actions/aws-creds@main
+        if: ${{ inputs.provider == 'aws' }}
+        with:
+          aws-profile: ${{ vars.AWS_PROFILE }}
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
+          aws-region: ${{ vars.AWS_DEFAULT_REGION }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-duration-seconds: 1200
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v2.0.3

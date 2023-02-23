@@ -31,6 +31,11 @@ on:
         required: false
         type: string
         default: 'Terraform Plan'
+      build_path:
+        description: 'Specifies the path of the build artifact.'
+        required: false
+        type: string
+        default: 'build'
 
 jobs:
   plan:
@@ -53,6 +58,19 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3.3.0
+      
+      - name: Download Build Artifact
+        if: ${{ inputs.build_path != '' }}
+        uses: actions/download-artifact@v2
+        with:
+          name: "build-${{ github.sha }}-${{ github.ref_name }}"
+          path: ${{ inputs.build_path }}
+
+      - name: Decompress Build artifact
+        if: ${{ inputs.build_path != '' }}
+        working-directory: ${{ inputs.build_path }}
+        run: |
+          unzip "build-${{ github.sha }}-${{ github.ref_name }}"
 
       - name: AWS Credentials
         # uses: ./.github/actions/aws-creds

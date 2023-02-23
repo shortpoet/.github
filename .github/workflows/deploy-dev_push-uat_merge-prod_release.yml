@@ -15,6 +15,11 @@ on:
         description: 'Specifies the cloud provider for auth.'
         required: true
         type: string
+      build_path:
+        description: 'Specifies the path of the build artifact.'
+        required: false
+        type: string
+        default: 'build'
 
 permissions:
   contents: read
@@ -58,6 +63,7 @@ jobs:
       gh_environment: 'dev'
       path: ${{ inputs.base_path }}/envs/dev
       plan-title: "AWS ${{ inputs.gh_environment }} ${{ inputs.infra_type }} plan"
+      build_path: ${{ inputs.build_path }}
 
   apply-dev:
     if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
@@ -69,6 +75,7 @@ jobs:
       gh_environment: 'dev'
       path: ${{ inputs.base_path }}/envs/dev
       infra_type: ${{ inputs.infra_type }}
+      build_path: ${{ inputs.build_path }}
 
   plan-uat:
     if: |
@@ -84,6 +91,7 @@ jobs:
       gh_environment: 'uat'
       path: ${{ inputs.base_path }}/envs/uat
       plan-title: "AWS ${{ inputs.gh_environment }} ${{ inputs.infra_type }} plan"
+      build_path: ${{ inputs.build_path }}
 
   apply-uat:
     if: |
@@ -97,6 +105,7 @@ jobs:
       gh_environment: 'uat'
       path: ${{ inputs.base_path }}/envs/uat
       infra_type: ${{ inputs.infra_type }}
+      build_path: ${{ inputs.build_path }}
 
   plan-prod:
     if: |
@@ -111,6 +120,7 @@ jobs:
       gh_environment: 'prod'
       path: ${{ inputs.base_path }}/envs/prod
       plan-title: "AWS ${{ inputs.gh_environment }} ${{ inputs.infra_type }} plan"
+      build_path: ${{ inputs.build_path }}
 
   apply-prod:
     if: |
@@ -125,3 +135,4 @@ jobs:
       gh_environment: 'prod'
       path: ${{ inputs.base_path }}/envs/prod
       infra_type: ${{ inputs.infra_type }}
+      build_path: ${{ inputs.build_path }}
