@@ -30,6 +30,11 @@ on:
         required: false
         type: string
         default: 'build'
+      build_artifact:
+        description: 'Specifies the name of the build artifact.'
+        required: false
+        type: string
+        default: 'build'
 
 jobs:
   apply:
@@ -90,7 +95,7 @@ jobs:
         if: ${{ inputs.build_path != '' }}
         working-directory: ${{ inputs.build_path }}
         run: |
-          unzip "build-${{ github.sha }}-${{ github.ref_name }}"
+          unzip "${{ inputs.build_artifact }}".zip
 
       - name: AWS Credentials
         # uses: ./.github/actions/aws-creds

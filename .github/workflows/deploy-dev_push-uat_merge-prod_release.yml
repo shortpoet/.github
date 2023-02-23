@@ -20,6 +20,11 @@ on:
         required: false
         type: string
         default: 'build'
+      build_artifact:
+        description: 'Specifies the name of the build artifact.'
+        required: false
+        type: string
+        default: 'build'
 
 permissions:
   contents: read
@@ -64,6 +69,7 @@ jobs:
       path: ${{ inputs.base_path }}/envs/dev
       plan-title: "AWS ${{ inputs.gh_environment }} ${{ inputs.infra_type }} plan"
       build_path: ${{ inputs.build_path }}
+      build_artifact: ${{ inputs.build_artifact }}
 
   apply-dev:
     if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
@@ -76,6 +82,7 @@ jobs:
       path: ${{ inputs.base_path }}/envs/dev
       infra_type: ${{ inputs.infra_type }}
       build_path: ${{ inputs.build_path }}
+      build_artifact: ${{ inputs.build_artifact }}
 
   plan-uat:
     if: |
@@ -92,6 +99,7 @@ jobs:
       path: ${{ inputs.base_path }}/envs/uat
       plan-title: "AWS ${{ inputs.gh_environment }} ${{ inputs.infra_type }} plan"
       build_path: ${{ inputs.build_path }}
+      build_artifact: ${{ inputs.build_artifact }}
 
   apply-uat:
     if: |
@@ -106,6 +114,7 @@ jobs:
       path: ${{ inputs.base_path }}/envs/uat
       infra_type: ${{ inputs.infra_type }}
       build_path: ${{ inputs.build_path }}
+      build_artifact: ${{ inputs.build_artifact }}
 
   plan-prod:
     if: |
@@ -121,6 +130,7 @@ jobs:
       path: ${{ inputs.base_path }}/envs/prod
       plan-title: "AWS ${{ inputs.gh_environment }} ${{ inputs.infra_type }} plan"
       build_path: ${{ inputs.build_path }}
+      build_artifact: ${{ inputs.build_artifact }}
 
   apply-prod:
     if: |
@@ -136,3 +146,4 @@ jobs:
       path: ${{ inputs.base_path }}/envs/prod
       infra_type: ${{ inputs.infra_type }}
       build_path: ${{ inputs.build_path }}
+      build_artifact: ${{ inputs.build_artifact }}
