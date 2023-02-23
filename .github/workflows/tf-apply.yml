@@ -29,17 +29,14 @@ on:
         description: 'Specifies the path of the build artifact.'
         required: false
         type: string
-        default: 'build'
       build_artifact:
         description: 'Specifies the name of the build artifact.'
         required: false
         type: string
-        default: 'build'
       build_artifact_uuid:
         description: 'Specifies the UUID of the build artifact.'
         required: false
         type: string
-        default: 'build'
 
 jobs:
   apply:
