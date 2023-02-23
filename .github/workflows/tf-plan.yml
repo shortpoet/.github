@@ -137,6 +137,8 @@ jobs:
           terraform state pull
           terraform output -json
           terraform plan --out=plan.tfplan
+          ls -la ../../../../..
+          ls -la ../../../../../app
         continue-on-error: true
 
       - name: Terraform Show
