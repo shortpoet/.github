@@ -91,6 +91,13 @@ jobs:
           name: "build-${{ github.sha }}-${{ github.ref_name }}"
           path: ${{ inputs.build_path }}
 
+      - name: Download Build Artifact - UAT
+        if: ${{ inputs.build_path != '' }} && ${{ inputs.gh_environment == 'uat' }}
+        uses: actions/download-artifact@v2
+        with:
+          name: "build-${{ github.sha }}-${{ github.head_ref }}"
+          path: ${{ inputs.build_path }}
+
       - name: Decompress Build artifact
         if: ${{ inputs.build_path != '' }}
         working-directory: ${{ inputs.build_path }}
