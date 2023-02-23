@@ -93,14 +93,14 @@ jobs:
         if: ${{ inputs.build_path != '' }} && ${{ inputs.gh_environment != 'uat' }}
         uses: actions/download-artifact@v2
         with:
-          name: $${{ inputs.build_artifact_uuid }}
+          name: ${{ inputs.build_artifact_uuid }}
           path: ${{ inputs.build_path }}
 
       - name: Download Build Artifact - UAT
         if: ${{ inputs.build_path != '' }} && ${{ inputs.gh_environment == 'uat' }}
         uses: actions/download-artifact@v2
         with:
-          name: $${{ inputs.build_artifact_uuid }}
+          name: ${{ inputs.build_artifact_uuid }}
           path: ${{ inputs.build_path }}
 
       - name: Decompress Build artifact
