@@ -75,7 +75,6 @@ jobs:
       plan-title: "AWS Dev ${{ inputs.infra_type }} plan"
       build_path: ${{ inputs.build_path }}
       build_artifact: ${{ inputs.build_artifact }}
-      build_artifact_uuid: ${{ inputs.build_artifact_uuid }}
 
   apply-dev:
     if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
