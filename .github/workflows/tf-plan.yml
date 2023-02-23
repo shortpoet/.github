@@ -70,6 +70,9 @@ jobs:
         if: ${{ inputs.build_path != '' }}
         working-directory: ${{ inputs.build_path }}
         run: |
+          pwd
+          ls -la
+          ls -la ../
           unzip "build-${{ github.sha }}-${{ github.ref_name }}"
 
       - name: AWS Credentials
