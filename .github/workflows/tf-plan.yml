@@ -85,6 +85,7 @@ jobs:
         working-directory: ${{ inputs.build_path }}
         run: |
           unzip "${{ inputs.build_artifact }}".zip
+          rm "${{ inputs.build_artifact }}".zip
 
       - name: AWS Credentials
         # uses: ./.github/actions/aws-creds
