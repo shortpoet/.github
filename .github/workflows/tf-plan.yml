@@ -67,21 +67,21 @@ jobs:
         uses: actions/checkout@v3.3.0
       
       - name: Download Build Artifact
-        if: ${{ inputs.build_path != '' }} && ${{ inputs.gh_environment != 'uat' }}
+        if: inputs.build_path != '' && inputs.gh_environment != 'uat'
         uses: actions/download-artifact@v2
         with:
           name: ${{ inputs.build_artifact_uuid }}
           path: ${{ inputs.build_path }}
 
       - name: Download Build Artifact - UAT
-        if: ${{ inputs.build_path != '' }} && ${{ inputs.gh_environment == 'uat' }}
+        if: inputs.build_path != '' && inputs.gh_environment == 'uat'
         uses: actions/download-artifact@v2
         with:
           name: ${{ inputs.build_artifact_uuid }}
           path: ${{ inputs.build_path }}
 
       - name: Decompress Build artifact
-        if: ${{ inputs.build_path != '' }}
+        if: inputs.build_path != ''
         working-directory: ${{ inputs.build_path }}
         run: |
           unzip "${{ inputs.build_artifact }}".zip
@@ -91,7 +91,7 @@ jobs:
         # uses: ./.github/actions/aws-creds
         # uses: shortpoet/tf-web/.github/actions/aws-creds@main
         uses: shortpoet/.github/.github/actions/aws-creds@main
-        if: ${{ inputs.provider == 'aws' }}
+        if: inputs.provider == 'aws'
         with:
           aws-profile: ${{ vars.AWS_PROFILE }}
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
