@@ -1,7 +1,4 @@
 ---
-env:
-  TF_VAR_build_cicd: true
-
 name: "Terraform Apply"
 on:
   workflow_call:
@@ -55,7 +52,6 @@ jobs:
       TF_LOG_PATH: tf.log
       TF_IN_AUTOMATION: true
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      TF_VAR_build_cicd: true
       PLAN_TITLE: "${{ inputs.infra_type }} Infra"
     steps:
       - name: Checkout
@@ -92,14 +88,14 @@ jobs:
 
       - name: Download Build Artifact
         if: inputs.build_path != '' && inputs.gh_environment != 'uat'
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: ${{ inputs.build_artifact_uuid }}
           path: ${{ inputs.build_path }}
 
       - name: Download Build Artifact - UAT
         if: inputs.build_path != '' && inputs.gh_environment == 'uat'
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: ${{ inputs.build_artifact_uuid }}
           path: ${{ inputs.build_path }}

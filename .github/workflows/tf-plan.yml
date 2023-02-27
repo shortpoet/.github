@@ -65,21 +65,20 @@ jobs:
       TF_LOG_PATH: tf.log
       TF_IN_AUTOMATION: true
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      # TF_VAR_build_cicd: true
     steps:
       - name: Checkout
         uses: actions/checkout@v3.3.0
       
       - name: Download Build Artifact
         if: inputs.build_path != '' && inputs.gh_environment != 'uat'
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: ${{ inputs.build_artifact_uuid }}
           path: ${{ inputs.build_path }}
 
       - name: Download Build Artifact - UAT
         if: inputs.build_path != '' && inputs.gh_environment == 'uat'
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v3
         with:
           name: ${{ inputs.build_artifact_uuid }}
           path: ${{ inputs.build_path }}
@@ -135,8 +134,6 @@ jobs:
 
       - name: Terraform Plan
         id: plan
-        # env:
-        #   TF_VAR_build_cicd: true
         run: |
           terraform plan --out=plan.tfplan
         continue-on-error: true
