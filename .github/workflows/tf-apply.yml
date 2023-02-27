@@ -55,6 +55,7 @@ jobs:
       TF_LOG_PATH: tf.log
       TF_IN_AUTOMATION: true
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      TF_VAR_build_cicd: true
       PLAN_TITLE: "${{ inputs.infra_type }} Infra"
     steps:
       - name: Checkout
