@@ -65,7 +65,7 @@ jobs:
       TF_LOG_PATH: tf.log
       TF_IN_AUTOMATION: true
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      TF_VAR_build_cicd: true
+      # TF_VAR_build_cicd: true
     steps:
       - name: Checkout
         uses: actions/checkout@v3.3.0
@@ -135,8 +135,8 @@ jobs:
 
       - name: Terraform Plan
         id: plan
-        env:
-          TF_VAR_build_cicd: true
+        # env:
+        #   TF_VAR_build_cicd: true
         run: |
           terraform plan --out=plan.tfplan
         continue-on-error: true
