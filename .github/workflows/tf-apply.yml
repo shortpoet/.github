@@ -1,4 +1,7 @@
 ---
+env:
+  TF_VAR_build_cicd: true
+
 name: "Terraform Apply"
 on:
   workflow_call:
