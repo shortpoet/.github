@@ -95,10 +95,16 @@ jobs:
 
       - name: Download Build Artifact - UAT
         if: inputs.build_path != '' && inputs.gh_environment == 'uat'
-        uses: actions/download-artifact@v3
-        with:
-          name: ${{ inputs.build_artifact_uuid }}
-          path: ${{ inputs.build_path }}
+        working-directory: ${{ inputs.build_path }}
+        run: |
+          REPO="$THIS_REPO"
+          WF_NAME="$PLAN_TITLE"
+          ARTIFACT_NAME="$BUILD_ARTIFACT_UUID"
+          RUN_ID=$(gh run --repo "${REPO}" list --workflow "${WF_NAME}" --branch "${BRANCH}" --json databaseId --jq '.[0].databaseId')
+          gh run --repo "${REPO}" download "${RUN_ID}" -n "${ARTIFACT_NAME}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BUILD_ARTIFACT_UUID: ${{ inputs.build_artifact_uuid }}
 
       - name: Decompress Build artifact
         if: inputs.build_path != ''
