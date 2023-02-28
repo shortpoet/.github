@@ -116,6 +116,15 @@ jobs:
           unzip "${{ inputs.build_artifact }}".zip
           rm "${{ inputs.build_artifact }}".zip
 
+      - name: Decompress Build artifact - UAT
+        if: inputs.build_path != '' && inputs.gh_environment == 'uat'
+        working-directory: ${{ inputs.build_path }}
+        run: |
+          cd ../../../../../app
+          mkdir -p build
+          cd build-*
+          unzip "${{ inputs.build_artifact }}".zip -d ../build
+
       - name: AWS Credentials
         # uses: ./.github/actions/aws-creds
         # uses: shortpoet/tf-web/.github/actions/aws-creds@main
