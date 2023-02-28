@@ -103,6 +103,8 @@ jobs:
           ARTIFACT_NAME="$BUILD_ARTIFACT_UUID"
           RUN_ID=$(gh run --repo "${REPO}" list --workflow "${WF_NAME}" --branch "${BRANCH}" --json databaseId --jq '.[0].databaseId')
           gh run --repo "${REPO}" download "${RUN_ID}"
+          pwd
+          ls -la
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           BUILD_ARTIFACT_UUID: ${{ inputs.build_artifact_uuid }}
