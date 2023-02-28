@@ -110,7 +110,7 @@ jobs:
           BUILD_ARTIFACT_UUID: ${{ inputs.build_artifact_uuid }}
 
       - name: Decompress Build artifact
-        if: inputs.build_path != ''
+        if: inputs.build_path != '' && inputs.gh_environment != 'uat'
         working-directory: ${{ inputs.build_path }}
         run: |
           unzip "${{ inputs.build_artifact }}".zip
