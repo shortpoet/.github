@@ -99,6 +99,7 @@ jobs:
           cd ../../../../..
           mkdir -p ${{ inputs.build_path }}
           cd ${{ inputs.build_path }}
+          BRANCH='uat'
           REPO="$THIS_REPO"
           WF_NAME="$PLAN_TITLE"
           ARTIFACT_NAME="$BUILD_ARTIFACT_UUID"
