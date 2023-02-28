@@ -118,7 +118,6 @@ jobs:
 
       - name: Decompress Build artifact - UAT
         if: inputs.build_path != '' && inputs.gh_environment == 'uat'
-        working-directory: ${{ inputs.build_path }}
         run: |
           cd ../../../../../app
           mkdir -p build
