@@ -95,8 +95,10 @@ jobs:
 
       - name: Download Build Artifact - UAT
         if: inputs.build_path != '' && inputs.gh_environment == 'uat'
-        working-directory: ${{ inputs.build_path }}
         run: |
+          cd ../../../../..
+          mkdir -p ${{ inputs.build_path }}
+          cd ${{ inputs.build_path }}
           REPO="$THIS_REPO"
           WF_NAME="$PLAN_TITLE"
           ARTIFACT_NAME="$BUILD_ARTIFACT_UUID"
