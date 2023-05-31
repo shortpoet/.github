@@ -50,10 +50,6 @@ on:
         description: 'Specifies the GitHub organization.'
         required: false
         type: string
-      token:
-        description: 'Specifies the GitHub token.'
-        required: false
-        type: string
 
 jobs:
   plan:

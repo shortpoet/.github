@@ -27,6 +27,10 @@ on:
         description: 'Specifies the UUID of the build artifact.'
         required: false
         type: string
+      org:
+        description: 'Specifies the GitHub organization.'
+        required: false
+        type: string
 
 permissions:
   contents: read
@@ -73,6 +77,7 @@ jobs:
       build_path: ${{ inputs.build_path }}
       build_artifact: ${{ inputs.build_artifact }}
       build_artifact_uuid: ${{ inputs.build_artifact_uuid }}
+      org: ${{ inputs.org }}
 
   apply-dev:
     if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
@@ -87,6 +92,7 @@ jobs:
       build_path: ${{ inputs.build_path }}
       build_artifact: ${{ inputs.build_artifact }}
       build_artifact_uuid: ${{ inputs.build_artifact_uuid }}
+      org: ${{ inputs.org }}
 
   plan-uat:
     if: |
@@ -105,6 +111,7 @@ jobs:
       build_path: ${{ inputs.build_path }}
       build_artifact: ${{ inputs.build_artifact }}
       build_artifact_uuid: ${{ inputs.build_artifact_uuid }}
+      org: ${{ inputs.org }}
 
   apply-uat:
     if: |
@@ -121,6 +128,7 @@ jobs:
       build_path: ${{ inputs.build_path }}
       build_artifact: ${{ inputs.build_artifact }}
       build_artifact_uuid: ${{ inputs.build_artifact_uuid }}
+      org: ${{ inputs.org }}
 
   plan-prod:
     if: |
@@ -138,6 +146,7 @@ jobs:
       build_path: ${{ inputs.build_path }}
       build_artifact: ${{ inputs.build_artifact }}
       build_artifact_uuid: ${{ inputs.build_artifact_uuid }}
+      org: ${{ inputs.org }}
 
   apply-prod:
     if: |
@@ -155,3 +164,4 @@ jobs:
       build_path: ${{ inputs.build_path }}
       build_artifact: ${{ inputs.build_artifact }}
       build_artifact_uuid: ${{ inputs.build_artifact_uuid }}
+      org: ${{ inputs.org }}
