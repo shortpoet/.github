@@ -46,6 +46,14 @@ on:
         description: 'Specifies the UUID of the build artifact.'
         required: false
         type: string
+      org:
+        description: 'Specifies the GitHub organization.'
+        required: false
+        type: string
+      token:
+        description: 'Specifies the GitHub token.'
+        required: false
+        type: string
 
 jobs:
   plan:
@@ -68,6 +76,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v3.3.0
+
+      - name: Setup private repo credentials for private modules
+        if: inputs.org != '' && inputs.token != ''
+        run: |
+          git config --global url."https://git:${{ inputs.token }}@github.com/${{ inputs.org }}".insteadOf "https://github.com/${{ inputs.org }}"
+          git config --global url."https://${{ inputs.token }}:x-oauth-basic@github.com/${{ inputs.org }}".insteadOf ssh://git@github.com/${{ inputs.org }}
+        shell: sh
       
       - name: Download Build Artifact
         if: inputs.build_path != '' && inputs.gh_environment != 'uat'
