@@ -111,7 +111,7 @@ jobs:
       build_path: ${{ inputs.build_path }}
       build_artifact: ${{ inputs.build_artifact }}
       build_artifact_uuid: ${{ inputs.build_artifact_uuid }}
-      org: ${{ inputs.module_org }}
+      module_org: ${{ inputs.module_org }}
 
   apply-uat:
     if: |
