@@ -4,41 +4,41 @@ on:
   workflow_call:
     inputs:
       provider:
-        description: 'Specifies the cloud provider.'
+        description: "Specifies the cloud provider."
         required: true
         type: string
       path:
-        description: 'Specifies the path of the root terraform module.'
+        description: "Specifies the path of the root terraform module."
         required: true
         type: string
       tf_version:
-        description: 'Specifies version of Terraform to use. e.g: 1.1.0 Default=latest.'
+        description: "Specifies version of Terraform to use. e.g: 1.1.0 Default=latest."
         required: false
         type: string
         default: latest
       gh_environment:
-        description: 'Specifies the GitHub deployment environment.'
+        description: "Specifies the GitHub deployment environment."
         required: false
         type: string
         # default: null
       infra_type:
-        description: 'Specifies the type of deployment. Used for plan title.'
+        description: "Specifies the type of deployment. Used for plan title."
         required: true
         type: string
       build_path:
-        description: 'Specifies the path of the build artifact.'
+        description: "Specifies the path of the build artifact."
         required: false
         type: string
       build_artifact:
-        description: 'Specifies the name of the build artifact. Name is arbitrary.'
+        description: "Specifies the name of the build artifact. Name is arbitrary."
         required: false
         type: string
       build_artifact_uuid:
-        description: 'Specifies the UUID of the build artifact.'
+        description: "Specifies the UUID of the build artifact."
         required: false
         type: string
       module_org:
-        description: 'Specifies the GitHub organization for terraform modules.'
+        description: "Specifies the GitHub organization for terraform modules."
         required: false
         type: string
 
@@ -59,7 +59,7 @@ jobs:
       PLAN_TITLE: "${{ inputs.infra_type }} Infra"
     steps:
       - name: Checkout
-        uses: actions/checkout@v3.3.0
+        uses: actions/checkout@v4
 
       - name: Setup private repo credentials for private modules
         if: inputs.module_org != ''

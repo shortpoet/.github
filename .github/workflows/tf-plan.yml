@@ -7,47 +7,47 @@ on:
   workflow_call:
     inputs:
       provider:
-        description: 'Specifies the cloud provider for auth.'
+        description: "Specifies the cloud provider for auth."
         required: true
         type: string
       path:
-        description: 'Specifies the path of the root terraform module.'
+        description: "Specifies the path of the root terraform module."
         required: true
         type: string
       tf_version:
-        description: 'Specifies version of Terraform to use. e.g: 1.1.0 Default=latest.'
+        description: "Specifies version of Terraform to use. e.g: 1.1.0 Default=latest."
         required: false
         type: string
         default: latest
       gh_environment:
-        description: 'Specifies the GitHub deployment environment.'
+        description: "Specifies the GitHub deployment environment."
         required: false
         type: string
         # default: null
       enable_TFSEC:
-        description: '(Optional) Enables TFSEC IaC scans and code quality checks on Terraform configurations'
+        description: "(Optional) Enables TFSEC IaC scans and code quality checks on Terraform configurations"
         required: false
         type: boolean
         default: false
       plan-title:
-        description: 'Specifies the title of the plan.'
+        description: "Specifies the title of the plan."
         required: false
         type: string
-        default: 'Terraform Plan'
+        default: "Terraform Plan"
       build_path:
-        description: 'Specifies the path of the build artifact.'
+        description: "Specifies the path of the build artifact."
         required: false
         type: string
       build_artifact:
-        description: 'Specifies the name of the build artifact. Name is arbitrary.'
+        description: "Specifies the name of the build artifact. Name is arbitrary."
         required: false
         type: string
       build_artifact_uuid:
-        description: 'Specifies the UUID of the build artifact.'
+        description: "Specifies the UUID of the build artifact."
         required: false
         type: string
       module_org:
-        description: 'Specifies the GitHub organization for terraform modules.'
+        description: "Specifies the GitHub organization for terraform modules."
         required: false
         type: string
 
@@ -71,7 +71,7 @@ jobs:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3.3.0
+        uses: actions/checkout@v4
 
       - name: Setup private repo credentials for private modules
         if: inputs.module_org != ''
@@ -79,7 +79,7 @@ jobs:
           git config --global url."https://git:${{ secrets.GITHUB_TOKEN }}@github.com/${{ inputs.module_org }}".insteadOf "https://github.com/${{ inputs.module_org }}"
           git config --global url."https://${{ secrets.GITHUB_TOKEN }}:x-oauth-basic@github.com/${{ inputs.module_org }}".insteadOf ssh://git@github.com/${{ inputs.module_org }}
         shell: sh
-      
+
       - name: Download Build Artifact
         if: inputs.build_path != '' && inputs.gh_environment != 'uat'
         uses: actions/download-artifact@v3
