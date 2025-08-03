@@ -1,0 +1,64 @@
+# .NET Library Template
+# Specialized template for .NET libraries with NuGet package publishing
+
+name: .NET Library CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  release:
+    types: [ published ]
+
+env:
+  LIBRARY_PROJECT: './src/YourLibrary.csproj'  # Update to your library project
+  TEST_PROJECT: './tests/YourLibrary.Tests.csproj'  # Update to your test project
+  DOTNET_VERSION: '9.0.x'
+
+jobs:
+  # Standard CI with comprehensive testing
+  ci:
+    uses: shortpoet/.github/.github/workflows/dotnet-ci.yml@main
+    with:
+      project-path: ${{ env.LIBRARY_PROJECT }}
+      test-project-path: ${{ env.TEST_PROJECT }}
+      dotnet-version: ${{ env.DOTNET_VERSION }}
+      
+      # Always create packages for libraries
+      create-package: true
+      version-suffix: ${{ github.event_name != 'release' && format('preview-{0}', github.run_number) || '' }}
+      
+      # Comprehensive testing for libraries
+      run-tests: true
+      collect-coverage: true
+      
+      # Only publish on release
+      publish-packages: ${{ github.event_name == 'release' }}
+      publish-source: 'github'  # Change to 'nuget' for public libraries
+      
+      configuration: 'Release'
+      verbosity: 'normal'
+    
+    secrets:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Uncomment for NuGet.org publishing:
+      # NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+
+  # Matrix testing for library compatibility
+  compatibility:
+    if: github.event_name == 'pull_request' || github.event_name == 'push'
+    uses: shortpoet/.github/.github/workflows/dotnet-matrix.yml@main
+    with:
+      project-path: ${{ env.LIBRARY_PROJECT }}
+      test-project-path: ${{ env.TEST_PROJECT }}
+      
+      # Test across multiple .NET versions for library compatibility
+      dotnet-versions: '["6.0.x", "8.0.x", "9.0.x"]'
+      operating-systems: '["ubuntu-latest", "windows-latest"]'  # Skip macOS for faster CI
+      configurations: '["Release"]'  # Only test Release for libraries
+      
+      fail-fast: false
+      run-tests: true
+      collect-coverage: false  # Skip coverage in matrix to reduce complexity
+      create-package: false    # Don't create packages in matrix build

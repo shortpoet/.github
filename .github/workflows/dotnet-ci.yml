@@ -1,0 +1,275 @@
+name: '.NET CI/CD'
+
+on:
+  workflow_call:
+    inputs:
+      # Project configuration
+      project-path:
+        description: 'Path to project or solution'
+        required: true
+        type: string
+      test-project-path:
+        description: 'Path to test project (if different from main project)'
+        required: false
+        type: string
+      dotnet-version:
+        description: '.NET SDK version'
+        required: false
+        type: string
+        default: '9.0.x'
+      
+      # Build configuration
+      configuration:
+        description: 'Build configuration'
+        required: false
+        type: string
+        default: 'Release'
+      create-package:
+        description: 'Create NuGet packages'
+        required: false
+        type: boolean
+        default: false
+      version-suffix:
+        description: 'Version suffix for packages'
+        required: false
+        type: string
+      
+      # Testing configuration
+      run-tests:
+        description: 'Run tests'
+        required: false
+        type: boolean
+        default: true
+      collect-coverage:
+        description: 'Collect code coverage'
+        required: false
+        type: boolean
+        default: true
+      test-filter:
+        description: 'Test filter expression'
+        required: false
+        type: string
+      
+      # Publishing configuration
+      publish-packages:
+        description: 'Publish packages after build'
+        required: false
+        type: boolean
+        default: false
+      publish-source:
+        description: 'Package source (github/nuget/azure)'
+        required: false
+        type: string
+        default: 'github'
+      skip-duplicate:
+        description: 'Skip duplicate packages during publish'
+        required: false
+        type: boolean
+        default: true
+      
+      # Advanced options
+      enable-caching:
+        description: 'Enable NuGet package caching'
+        required: false
+        type: boolean
+        default: true
+      include-prerelease:
+        description: 'Include prerelease .NET versions'
+        required: false
+        type: boolean
+        default: false
+      verbosity:
+        description: 'Build/test verbosity level'
+        required: false
+        type: string
+        default: 'normal'
+    
+    secrets:
+      # Authentication secrets
+      GITHUB_TOKEN:
+        description: 'GitHub token for packages'
+        required: false
+      NUGET_API_KEY:
+        description: 'NuGet.org API key'
+        required: false
+      AZURE_FEED_URL:
+        description: 'Azure DevOps feed URL'
+        required: false
+      AZURE_PAT:
+        description: 'Azure DevOps Personal Access Token'
+        required: false
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    name: 'Build and Test'
+    
+    outputs:
+      has-packages: ${{ steps.check-packages.outputs.has-packages }}
+      package-count: ${{ steps.check-packages.outputs.package-count }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup .NET
+        uses: ./.github/actions/dotnet/setup
+        with:
+          dotnet-version: ${{ inputs.dotnet-version }}
+          include-prerelease: ${{ inputs.include-prerelease }}
+          enable-caching: ${{ inputs.enable-caching }}
+      
+      - name: Build project
+        uses: ./.github/actions/dotnet/build
+        with:
+          project-path: ${{ inputs.project-path }}
+          configuration: ${{ inputs.configuration }}
+          create-package: ${{ inputs.create-package }}
+          version-suffix: ${{ inputs.version-suffix }}
+      
+      - name: Run tests
+        if: inputs.run-tests
+        uses: ./.github/actions/dotnet/test
+        with:
+          project-path: ${{ inputs.test-project-path || inputs.project-path }}
+          configuration: ${{ inputs.configuration }}
+          collect-coverage: ${{ inputs.collect-coverage }}
+          verbosity: ${{ inputs.verbosity }}
+          filter: ${{ inputs.test-filter }}
+      
+      - name: Check for packages
+        id: check-packages
+        if: inputs.create-package
+        shell: bash
+        run: |
+          if ls ./artifacts/*.nupkg 1> /dev/null 2>&1; then
+            PACKAGE_COUNT=$(ls ./artifacts/*.nupkg | wc -l)
+            echo "has-packages=true" >> $GITHUB_OUTPUT
+            echo "package-count=$PACKAGE_COUNT" >> $GITHUB_OUTPUT
+            echo "📦 Found $PACKAGE_COUNT package(s) ready for publishing"
+            ls -la ./artifacts/*.nupkg
+          else
+            echo "has-packages=false" >> $GITHUB_OUTPUT
+            echo "package-count=0" >> $GITHUB_OUTPUT
+            echo "ℹ️ No packages created"
+          fi
+
+  publish-packages:
+    if: inputs.publish-packages && needs.build-and-test.outputs.has-packages == 'true'
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    name: 'Publish Packages'
+    
+    strategy:
+      matrix:
+        source: ${{ fromJSON(inputs.publish-source == 'all' && '["github", "nuget"]' || format('["{0}"]', inputs.publish-source)) }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup .NET
+        uses: ./.github/actions/dotnet/setup
+        with:
+          dotnet-version: ${{ inputs.dotnet-version }}
+          enable-caching: false  # Skip caching for publish job
+      
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: '*'
+          merge-multiple: true
+      
+      - name: Restore packages from build artifacts
+        shell: bash
+        run: |
+          if [[ -d "./artifacts" ]]; then
+            echo "📦 Using artifacts from build job"
+            ls -la ./artifacts/
+          else
+            echo "❌ No artifacts found - rebuilding packages"
+            # Fallback: rebuild if artifacts not available
+            dotnet restore "${{ inputs.project-path }}"
+            dotnet pack "${{ inputs.project-path }}" \
+              --configuration ${{ inputs.configuration }} \
+              --output ./artifacts \
+              ${{ inputs.version-suffix && format('--version-suffix {0}', inputs.version-suffix) || '' }}
+          fi
+      
+      - name: Publish to ${{ matrix.source }}
+        uses: ./.github/actions/dotnet/publish
+        with:
+          source: ${{ matrix.source }}
+          skip-duplicate: ${{ inputs.skip-duplicate }}
+          github-token: ${{ matrix.source == 'github' && secrets.GITHUB_TOKEN || '' }}
+          nuget-api-key: ${{ matrix.source == 'nuget' && secrets.NUGET_API_KEY || '' }}
+          azure-feed-url: ${{ matrix.source == 'azure' && secrets.AZURE_FEED_URL || '' }}
+          azure-pat: ${{ matrix.source == 'azure' && secrets.AZURE_PAT || '' }}
+
+  summary:
+    if: always()
+    needs: [build-and-test, publish-packages]
+    runs-on: ubuntu-latest
+    name: 'Workflow Summary'
+    
+    steps:
+      - name: Build summary
+        shell: bash
+        run: |
+          echo "# 🚀 .NET CI/CD Workflow Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Build status
+          if [[ "${{ needs.build-and-test.result }}" == "success" ]]; then
+            echo "✅ **Build**: Successful" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Build**: Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Test status
+          if [[ "${{ inputs.run-tests }}" == "true" ]]; then
+            if [[ "${{ needs.build-and-test.result }}" == "success" ]]; then
+              echo "✅ **Tests**: Passed" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "❌ **Tests**: Failed" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "⏭️ **Tests**: Skipped" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Package status
+          if [[ "${{ inputs.create-package }}" == "true" ]]; then
+            PACKAGE_COUNT="${{ needs.build-and-test.outputs.package-count || '0' }}"
+            if [[ "$PACKAGE_COUNT" -gt "0" ]]; then
+              echo "📦 **Packages**: $PACKAGE_COUNT created" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "❌ **Packages**: None created" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "⏭️ **Packages**: Creation skipped" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Publish status
+          if [[ "${{ inputs.publish-packages }}" == "true" ]]; then
+            if [[ "${{ needs.publish-packages.result }}" == "success" ]]; then
+              echo "🚀 **Publishing**: Successful to ${{ inputs.publish-source }}" >> $GITHUB_STEP_SUMMARY
+            elif [[ "${{ needs.publish-packages.result }}" == "skipped" ]]; then
+              echo "⏭️ **Publishing**: Skipped (no packages)" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "❌ **Publishing**: Failed" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "⏭️ **Publishing**: Disabled" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          # Configuration details
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Configuration" >> $GITHUB_STEP_SUMMARY
+          echo "- **Project**: \`${{ inputs.project-path }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **.NET Version**: ${{ inputs.dotnet-version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Configuration**: ${{ inputs.configuration }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Source**: ${{ inputs.publish-source }}" >> $GITHUB_STEP_SUMMARY
+          
+          if [[ -n "${{ inputs.version-suffix }}" ]]; then
+            echo "- **Version Suffix**: ${{ inputs.version-suffix }}" >> $GITHUB_STEP_SUMMARY
+          fi

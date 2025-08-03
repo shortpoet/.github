@@ -1,0 +1,16 @@
+{
+  "name": ".NET Matrix Build Workflow",
+  "description": "Test .NET projects across multiple versions, operating systems, and configurations to ensure compatibility.",
+  "iconName": "dotnet",
+  "categories": [
+    "CI",
+    "testing",
+    "dotnet"
+  ],
+  "filePatterns": [
+    "*.csproj",
+    "*.sln",
+    "*.fsproj",
+    "*.vbproj"
+  ]
+}

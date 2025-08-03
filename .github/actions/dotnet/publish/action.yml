@@ -1,0 +1,167 @@
+name: 'Publish .NET Package'
+description: 'Publish .NET packages to various sources (GitHub, NuGet, Azure DevOps)'
+inputs:
+  package-path:
+    description: 'Path to package(s) - supports glob patterns'
+    required: false
+    default: './artifacts/*.nupkg'
+  source:
+    description: 'Package source (github/nuget/azure)'
+    required: true
+  skip-duplicate:
+    description: 'Skip duplicate packages'
+    required: false
+    default: 'true'
+  github-token:
+    description: 'GitHub token for packages'
+    required: false
+  nuget-api-key:
+    description: 'NuGet API key'
+    required: false
+  azure-feed-url:
+    description: 'Azure DevOps feed URL'
+    required: false
+  azure-pat:
+    description: 'Azure DevOps Personal Access Token'
+    required: false
+  timeout:
+    description: 'Push timeout in seconds'
+    required: false
+    default: '300'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Validate inputs
+      shell: bash
+      run: |
+        echo "🔍 Validating publish inputs"
+        echo "Source: ${{ inputs.source }}"
+        echo "Package path: ${{ inputs.package-path }}"
+        echo "Skip duplicates: ${{ inputs.skip-duplicate }}"
+        
+        # Check if packages exist
+        if ! ls ${{ inputs.package-path }} 1> /dev/null 2>&1; then
+          echo "❌ No packages found at: ${{ inputs.package-path }}"
+          exit 1
+        fi
+        
+        PACKAGE_COUNT=$(ls ${{ inputs.package-path }} | wc -l)
+        echo "📦 Found $PACKAGE_COUNT package(s) to publish"
+        ls -la ${{ inputs.package-path }}
+    
+    - name: Publish to GitHub Packages
+      if: inputs.source == 'github'
+      shell: bash
+      run: |
+        echo "🚀 Publishing to GitHub Packages"
+        
+        if [[ -z "${{ inputs.github-token }}" ]]; then
+          echo "❌ GitHub token is required for GitHub Packages"
+          exit 1
+        fi
+        
+        # Configure GitHub NuGet source
+        GITHUB_SOURCE="https://nuget.pkg.github.com/${{ github.repository_owner }}/index.json"
+        echo "📍 GitHub source: $GITHUB_SOURCE"
+        
+        dotnet nuget add source --username "${{ github.repository_owner }}" \
+          --password "${{ inputs.github-token }}" \
+          --store-password-in-clear-text \
+          --name github \
+          "$GITHUB_SOURCE" || echo "Source may already exist"
+        
+        # Push packages
+        for package in ${{ inputs.package-path }}; do
+          echo "📤 Pushing $(basename "$package")"
+          
+          PUSH_ARGS="--source github --api-key ${{ inputs.github-token }} --timeout ${{ inputs.timeout }}"
+          if [[ "${{ inputs.skip-duplicate }}" == "true" ]]; then
+            PUSH_ARGS="$PUSH_ARGS --skip-duplicate"
+          fi
+          
+          if ! dotnet nuget push "$package" $PUSH_ARGS; then
+            echo "❌ Failed to push $(basename "$package")"
+            exit 1
+          fi
+          
+          echo "✅ Successfully pushed $(basename "$package")"
+        done
+    
+    - name: Publish to NuGet.org
+      if: inputs.source == 'nuget'
+      shell: bash
+      run: |
+        echo "🚀 Publishing to NuGet.org"
+        
+        if [[ -z "${{ inputs.nuget-api-key }}" ]]; then
+          echo "❌ NuGet API key is required for NuGet.org"
+          exit 1
+        fi
+        
+        for package in ${{ inputs.package-path }}; do
+          echo "📤 Pushing $(basename "$package") to NuGet.org"
+          
+          PUSH_ARGS="--source https://api.nuget.org/v3/index.json --api-key ${{ inputs.nuget-api-key }} --timeout ${{ inputs.timeout }}"
+          if [[ "${{ inputs.skip-duplicate }}" == "true" ]]; then
+            PUSH_ARGS="$PUSH_ARGS --skip-duplicate"
+          fi
+          
+          if ! dotnet nuget push "$package" $PUSH_ARGS; then
+            echo "❌ Failed to push $(basename "$package")"
+            exit 1
+          fi
+          
+          echo "✅ Successfully pushed $(basename "$package")"
+        done
+    
+    - name: Publish to Azure DevOps
+      if: inputs.source == 'azure'
+      shell: bash
+      run: |
+        echo "🚀 Publishing to Azure DevOps"
+        
+        if [[ -z "${{ inputs.azure-feed-url }}" ]]; then
+          echo "❌ Azure feed URL is required for Azure DevOps publishing"
+          exit 1
+        fi
+        
+        # Use PAT if provided, otherwise rely on Azure authentication
+        API_KEY="${{ inputs.azure-pat }}"
+        if [[ -z "$API_KEY" ]]; then
+          API_KEY="AzureDevOps"
+          echo "ℹ️ Using Azure DevOps authentication (no PAT provided)"
+        else
+          echo "ℹ️ Using provided PAT for authentication"
+        fi
+        
+        for package in ${{ inputs.package-path }}; do
+          echo "📤 Pushing $(basename "$package") to Azure DevOps"
+          
+          PUSH_ARGS="--source ${{ inputs.azure-feed-url }} --api-key $API_KEY --timeout ${{ inputs.timeout }}"
+          if [[ "${{ inputs.skip-duplicate }}" == "true" ]]; then
+            PUSH_ARGS="$PUSH_ARGS --skip-duplicate"
+          fi
+          
+          if ! dotnet nuget push "$package" $PUSH_ARGS; then
+            echo "❌ Failed to push $(basename "$package")"
+            exit 1
+          fi
+          
+          echo "✅ Successfully pushed $(basename "$package")"
+        done
+    
+    - name: Publish summary
+      if: always()
+      shell: bash
+      run: |
+        echo "📋 Publish Summary"
+        echo "Source: ${{ inputs.source }}"
+        echo "Packages processed:"
+        for package in ${{ inputs.package-path }}; do
+          if [[ -f "$package" ]]; then
+            echo "  📦 $(basename "$package")"
+          fi
+        done
+        echo "Skip duplicates: ${{ inputs.skip-duplicate }}"
+        echo "✅ Publish operation completed"

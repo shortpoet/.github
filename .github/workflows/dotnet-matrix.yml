@@ -1,0 +1,296 @@
+name: '.NET Matrix Build'
+
+on:
+  workflow_call:
+    inputs:
+      # Project configuration
+      project-path:
+        description: 'Path to project or solution'
+        required: true
+        type: string
+      test-project-path:
+        description: 'Path to test project (if different from main project)'
+        required: false
+        type: string
+      
+      # Matrix configuration
+      dotnet-versions:
+        description: '.NET versions to test (JSON array)'
+        required: false
+        type: string
+        default: '["8.0.x", "9.0.x"]'
+      operating-systems:
+        description: 'Operating systems to test (JSON array)'
+        required: false
+        type: string
+        default: '["ubuntu-latest", "windows-latest", "macos-latest"]'
+      configurations:
+        description: 'Build configurations to test (JSON array)'
+        required: false
+        type: string
+        default: '["Debug", "Release"]'
+      
+      # Build options
+      create-package:
+        description: 'Create packages (only on ubuntu-latest/Release)'
+        required: false
+        type: boolean
+        default: false
+      version-suffix:
+        description: 'Version suffix for packages'
+        required: false
+        type: string
+      
+      # Testing options
+      run-tests:
+        description: 'Run tests'
+        required: false
+        type: boolean
+        default: true
+      collect-coverage:
+        description: 'Collect coverage (only on ubuntu-latest)'
+        required: false
+        type: boolean
+        default: true
+      test-filter:
+        description: 'Test filter expression'
+        required: false
+        type: string
+      
+      # Matrix control
+      fail-fast:
+        description: 'Stop all jobs on first failure'
+        required: false
+        type: boolean
+        default: false
+      max-parallel:
+        description: 'Maximum parallel jobs (0 = unlimited)'
+        required: false
+        type: number
+        default: 0
+      
+      # Advanced options
+      include-prerelease:
+        description: 'Include prerelease .NET versions'
+        required: false
+        type: boolean
+        default: false
+      verbosity:
+        description: 'Build/test verbosity level'
+        required: false
+        type: string
+        default: 'normal'
+
+jobs:
+  matrix-build:
+    runs-on: ${{ matrix.os }}
+    name: '${{ matrix.os }} / .NET ${{ matrix.dotnet-version }} / ${{ matrix.configuration }}'
+    
+    strategy:
+      fail-fast: ${{ inputs.fail-fast }}
+      max-parallel: ${{ inputs.max-parallel > 0 && inputs.max-parallel || null }}
+      matrix:
+        os: ${{ fromJSON(inputs.operating-systems) }}
+        dotnet-version: ${{ fromJSON(inputs.dotnet-versions) }}
+        configuration: ${{ fromJSON(inputs.configurations) }}
+        exclude:
+          # Skip package creation on non-ubuntu or non-release builds
+          - os: windows-latest
+            create-package: true
+          - os: macos-latest
+            create-package: true
+          - configuration: Debug
+            create-package: true
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup .NET ${{ matrix.dotnet-version }}
+        uses: ./.github/actions/dotnet/setup
+        with:
+          dotnet-version: ${{ matrix.dotnet-version }}
+          include-prerelease: ${{ inputs.include-prerelease }}
+          enable-caching: true
+      
+      - name: Build project (${{ matrix.configuration }})
+        uses: ./.github/actions/dotnet/build
+        with:
+          project-path: ${{ inputs.project-path }}
+          configuration: ${{ matrix.configuration }}
+          create-package: ${{ inputs.create-package && matrix.os == 'ubuntu-latest' && matrix.configuration == 'Release' }}
+          version-suffix: ${{ inputs.version-suffix }}
+      
+      - name: Run tests
+        if: inputs.run-tests
+        uses: ./.github/actions/dotnet/test
+        with:
+          project-path: ${{ inputs.test-project-path || inputs.project-path }}
+          configuration: ${{ matrix.configuration }}
+          collect-coverage: ${{ inputs.collect-coverage && matrix.os == 'ubuntu-latest' }}
+          verbosity: ${{ inputs.verbosity }}
+          filter: ${{ inputs.test-filter }}
+          results-directory: './test-results/${{ matrix.os }}-${{ matrix.dotnet-version }}-${{ matrix.configuration }}'
+      
+      - name: Upload matrix artifacts
+        if: inputs.create-package && matrix.os == 'ubuntu-latest' && matrix.configuration == 'Release'
+        uses: actions/upload-artifact@v4
+        with:
+          name: packages-${{ matrix.dotnet-version }}
+          path: ./artifacts/*.nupkg
+          retention-days: 5
+
+  matrix-summary:
+    if: always()
+    needs: matrix-build
+    runs-on: ubuntu-latest
+    name: 'Matrix Summary'
+    
+    steps:
+      - name: Calculate matrix results
+        id: results
+        shell: bash
+        run: |
+          # Get job results from needs context
+          RESULTS='${{ toJSON(needs.matrix-build.result) }}'
+          
+          # Count successes and failures
+          if [[ "$RESULTS" == "\"success\"" ]]; then
+            SUCCESS_COUNT=1
+            FAILURE_COUNT=0
+          elif [[ "$RESULTS" == "\"failure\"" ]]; then
+            SUCCESS_COUNT=0
+            FAILURE_COUNT=1
+          else
+            # For matrix jobs, we need to analyze individual results
+            SUCCESS_COUNT=0
+            FAILURE_COUNT=0
+            
+            # This is a simplified approach - in real scenarios you'd need more complex logic
+            if [[ "$RESULTS" == *"success"* ]]; then
+              SUCCESS_COUNT=1
+            fi
+            if [[ "$RESULTS" == *"failure"* ]]; then
+              FAILURE_COUNT=1
+            fi
+          fi
+          
+          echo "success-count=$SUCCESS_COUNT" >> $GITHUB_OUTPUT
+          echo "failure-count=$FAILURE_COUNT" >> $GITHUB_OUTPUT
+          
+          # Determine overall status
+          if [[ $FAILURE_COUNT -gt 0 ]]; then
+            echo "overall-status=failure" >> $GITHUB_OUTPUT
+          else
+            echo "overall-status=success" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Generate matrix summary
+        shell: bash
+        run: |
+          echo "# 🧪 .NET Matrix Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Overall status
+          OVERALL_STATUS="${{ steps.results.outputs.overall-status }}"
+          if [[ "$OVERALL_STATUS" == "success" ]]; then
+            echo "✅ **Overall Status**: All matrix combinations passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **Overall Status**: Some matrix combinations failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Matrix configuration
+          echo "## Matrix Configuration" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Dimension | Values |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **Operating Systems** | $(echo '${{ inputs.operating-systems }}' | jq -r '. | join(\", \")') |" >> $GITHUB_STEP_SUMMARY
+          echo "| **.NET Versions** | $(echo '${{ inputs.dotnet-versions }}' | jq -r '. | join(\", \")') |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Configurations** | $(echo '${{ inputs.configurations }}' | jq -r '. | join(\", \")') |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Fail Fast** | ${{ inputs.fail-fast }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| **Max Parallel** | ${{ inputs.max-parallel > 0 && inputs.max-parallel || 'Unlimited' }} |" >> $GITHUB_STEP_SUMMARY
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Build settings
+          echo "## Build Settings" >> $GITHUB_STEP_SUMMARY
+          echo "- **Project**: \`${{ inputs.project-path }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Create Packages**: ${{ inputs.create-package && 'Yes (ubuntu-latest/Release only)' || 'No' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Run Tests**: ${{ inputs.run-tests }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Collect Coverage**: ${{ inputs.collect-coverage && 'Yes (ubuntu-latest only)' || 'No' }}" >> $GITHUB_STEP_SUMMARY
+          
+          if [[ -n "${{ inputs.version-suffix }}" ]]; then
+            echo "- **Version Suffix**: ${{ inputs.version-suffix }}" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [[ -n "${{ inputs.test-filter }}" ]]; then
+            echo "- **Test Filter**: \`${{ inputs.test-filter }}\`" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Results breakdown
+          echo "## Results Breakdown" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Calculate total combinations
+          OS_COUNT=$(echo '${{ inputs.operating-systems }}' | jq '. | length')
+          DOTNET_COUNT=$(echo '${{ inputs.dotnet-versions }}' | jq '. | length')
+          CONFIG_COUNT=$(echo '${{ inputs.configurations }}' | jq '. | length')
+          TOTAL_COMBINATIONS=$((OS_COUNT * DOTNET_COUNT * CONFIG_COUNT))
+          
+          echo "- **Total Combinations**: $TOTAL_COMBINATIONS" >> $GITHUB_STEP_SUMMARY
+          echo "- **Successful**: ${{ steps.results.outputs.success-count }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Failed**: ${{ steps.results.outputs.failure-count }}" >> $GITHUB_STEP_SUMMARY
+          
+          # Add recommendations
+          if [[ "${{ steps.results.outputs.failure-count }}" -gt "0" ]]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "## 🔍 Troubleshooting" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Some matrix combinations failed. Consider:" >> $GITHUB_STEP_SUMMARY
+            echo "- Check individual job logs for specific error details" >> $GITHUB_STEP_SUMMARY
+            echo "- Review .NET version compatibility with your project" >> $GITHUB_STEP_SUMMARY
+            echo "- Verify OS-specific dependencies and paths" >> $GITHUB_STEP_SUMMARY
+            echo "- Consider excluding problematic combinations temporarily" >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # Optional: Aggregate coverage from all ubuntu-latest runs
+  aggregate-coverage:
+    if: inputs.collect-coverage && needs.matrix-build.result == 'success'
+    needs: matrix-build
+    runs-on: ubuntu-latest
+    name: 'Aggregate Coverage'
+    
+    steps:
+      - name: Download all coverage artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: 'coverage-report-*'
+          merge-multiple: true
+          path: ./coverage-reports
+      
+      - name: List coverage files
+        shell: bash
+        run: |
+          echo "📊 Coverage files found:"
+          find ./coverage-reports -name "*.xml" -type f | head -10
+          
+          COVERAGE_COUNT=$(find ./coverage-reports -name "*.xml" -type f | wc -l)
+          echo "Total coverage files: $COVERAGE_COUNT"
+          
+          if [[ $COVERAGE_COUNT -gt 0 ]]; then
+            echo "✅ Coverage data available for aggregation"
+          else
+            echo "⚠️ No coverage files found"
+          fi
+      
+      - name: Upload aggregated coverage
+        if: hashFiles('./coverage-reports/**/*.xml') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: aggregated-coverage-${{ github.run_id }}
+          path: ./coverage-reports/**/*.xml
+          retention-days: 30
