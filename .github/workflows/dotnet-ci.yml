@@ -85,10 +85,7 @@ on:
         default: 'normal'
     
     secrets:
-      # Authentication secrets
-      GITHUB_TOKEN:
-        description: 'GitHub token for packages'
-        required: false
+      # Authentication secrets (GITHUB_TOKEN is automatically available)
       NUGET_API_KEY:
         description: 'NuGet.org API key'
         required: false
@@ -201,7 +198,7 @@ jobs:
         with:
           source: ${{ matrix.source }}
           skip-duplicate: ${{ inputs.skip-duplicate }}
-          github-token: ${{ matrix.source == 'github' && secrets.GITHUB_TOKEN || '' }}
+          github-token: ${{ matrix.source == 'github' && github.token || '' }}
           nuget-api-key: ${{ matrix.source == 'nuget' && secrets.NUGET_API_KEY || '' }}
           azure-feed-url: ${{ matrix.source == 'azure' && secrets.AZURE_FEED_URL || '' }}
           azure-pat: ${{ matrix.source == 'azure' && secrets.AZURE_PAT || '' }}

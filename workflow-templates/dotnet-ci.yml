@@ -42,9 +42,7 @@ jobs:
       enable-caching: true
       verbosity: 'normal'
     
-    secrets:
-      # Required for publishing to GitHub Packages
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    secrets: inherit
       
       # Add these secrets in your repository settings if publishing to external sources:
       # NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}

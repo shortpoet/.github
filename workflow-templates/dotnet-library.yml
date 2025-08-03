@@ -40,9 +40,9 @@ jobs:
       configuration: 'Release'
       verbosity: 'normal'
     
-    secrets:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      # Uncomment for NuGet.org publishing:
+    secrets: inherit
+      # All secrets (including GITHUB_TOKEN) are automatically inherited
+      # Add these secrets in your repository settings if publishing to external sources:
       # NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
 
   # Matrix testing for library compatibility
