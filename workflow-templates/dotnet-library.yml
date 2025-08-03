@@ -19,7 +19,7 @@ env:
 jobs:
   # Standard CI with comprehensive testing
   ci:
-    uses: shortpoet/.github/.github/workflows/dotnet-ci.yml@main
+    uses: shortpoet/.github/.github/workflows/dotnet-ci.yml@dotnet
     with:
       project-path: ${{ env.LIBRARY_PROJECT }}
       test-project-path: ${{ env.TEST_PROJECT }}
@@ -48,7 +48,7 @@ jobs:
   # Matrix testing for library compatibility
   compatibility:
     if: github.event_name == 'pull_request' || github.event_name == 'push'
-    uses: shortpoet/.github/.github/workflows/dotnet-matrix.yml@main
+    uses: shortpoet/.github/.github/workflows/dotnet-matrix.yml@dotnet
     with:
       project-path: ${{ env.LIBRARY_PROJECT }}
       test-project-path: ${{ env.TEST_PROJECT }}
