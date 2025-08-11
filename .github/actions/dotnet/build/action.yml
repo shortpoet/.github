@@ -1,0 +1,71 @@
+name: 'Build .NET Project'
+description: 'Build .NET project with optional package creation'
+inputs:
+  project-path:
+    description: 'Path to project or solution'
+    required: true
+  configuration:
+    description: 'Build configuration'
+    required: false
+    default: 'Release'
+  create-package:
+    description: 'Create NuGet package'
+    required: false
+    default: 'false'
+  version-suffix:
+    description: 'Version suffix for packages'
+    required: false
+  output-path:
+    description: 'Output path for packages'
+    required: false
+    default: './artifacts'
+  additional-args:
+    description: 'Additional build arguments'
+    required: false
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Restore dependencies
+      shell: bash
+      run: |
+        echo "🔄 Restoring dependencies for ${{ inputs.project-path }}"
+        dotnet restore "${{ inputs.project-path }}"
+    
+    - name: Build project
+      shell: bash
+      run: |
+        echo "🔨 Building ${{ inputs.project-path }}"
+        BUILD_ARGS="--configuration ${{ inputs.configuration }} --no-restore"
+        
+        if [[ -n "${{ inputs.version-suffix }}" ]]; then
+          BUILD_ARGS="$BUILD_ARGS --version-suffix ${{ inputs.version-suffix }}"
+        fi
+        
+        if [[ -n "${{ inputs.additional-args }}" ]]; then
+          BUILD_ARGS="$BUILD_ARGS ${{ inputs.additional-args }}"
+        fi
+        
+        dotnet build "${{ inputs.project-path }}" $BUILD_ARGS
+    
+    - name: Create output directory
+      if: inputs.create-package == 'true'
+      shell: bash
+      run: |
+        mkdir -p "${{ inputs.output-path }}"
+    
+    - name: Create NuGet package
+      if: inputs.create-package == 'true'
+      shell: bash
+      run: |
+        echo "📦 Creating NuGet package for ${{ inputs.project-path }}"
+        PACK_ARGS="--configuration ${{ inputs.configuration }} --no-build --output ${{ inputs.output-path }}"
+        
+        if [[ -n "${{ inputs.version-suffix }}" ]]; then
+          PACK_ARGS="$PACK_ARGS --version-suffix ${{ inputs.version-suffix }}"
+        fi
+        
+        dotnet pack "${{ inputs.project-path }}" $PACK_ARGS
+        
+        echo "📋 Created packages:"
+        ls -la "${{ inputs.output-path }}"/*.nupkg 2>/dev/null || echo "No packages found"

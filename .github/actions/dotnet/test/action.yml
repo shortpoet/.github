@@ -1,0 +1,93 @@
+name: 'Test .NET Project'
+description: 'Run .NET tests with optional coverage collection'
+inputs:
+  project-path:
+    description: 'Path to test project or solution'
+    required: true
+  configuration:
+    description: 'Build configuration'
+    required: false
+    default: 'Debug'
+  collect-coverage:
+    description: 'Collect code coverage'
+    required: false
+    default: 'true'
+  coverage-format:
+    description: 'Coverage output format'
+    required: false
+    default: 'cobertura'
+  verbosity:
+    description: 'Test verbosity level'
+    required: false
+    default: 'normal'
+  filter:
+    description: 'Test filter expression'
+    required: false
+  results-directory:
+    description: 'Test results directory'
+    required: false
+    default: './test-results'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Create results directory
+      shell: bash
+      run: |
+        mkdir -p "${{ inputs.results-directory }}"
+    
+    - name: Run tests
+      shell: bash
+      run: |
+        echo "🧪 Running tests for ${{ inputs.project-path }}"
+        TEST_ARGS="--configuration ${{ inputs.configuration }} --no-build --verbosity ${{ inputs.verbosity }}"
+        TEST_ARGS="$TEST_ARGS --results-directory ${{ inputs.results-directory }}"
+        TEST_ARGS="$TEST_ARGS --logger trx --logger \"console;verbosity=${{ inputs.verbosity }}\""
+        
+        if [[ -n "${{ inputs.filter }}" ]]; then
+          TEST_ARGS="$TEST_ARGS --filter \"${{ inputs.filter }}\""
+        fi
+        
+        if [[ "${{ inputs.collect-coverage }}" == "true" ]]; then
+          TEST_ARGS="$TEST_ARGS --collect:\"XPlat Code Coverage\""
+          TEST_ARGS="$TEST_ARGS -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=${{ inputs.coverage-format }}"
+        fi
+        
+        dotnet test "${{ inputs.project-path }}" $TEST_ARGS
+    
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results-${{ github.run_id }}
+        path: ${{ inputs.results-directory }}/**/*.trx
+    
+    - name: Upload coverage reports
+      if: inputs.collect-coverage == 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report-${{ github.run_id }}
+        path: |
+          ${{ inputs.results-directory }}/**/coverage.${{ inputs.coverage-format }}.xml
+          **/TestResults/**/coverage.${{ inputs.coverage-format }}.xml
+    
+    - name: Test results summary
+      if: always()
+      shell: bash
+      run: |
+        echo "📊 Test Results Summary:"
+        if ls ${{ inputs.results-directory }}/**/*.trx 1> /dev/null 2>&1; then
+          echo "✅ Test result files created"
+          ls -la ${{ inputs.results-directory }}/**/*.trx
+        else
+          echo "⚠️ No test result files found"
+        fi
+        
+        if [[ "${{ inputs.collect-coverage }}" == "true" ]]; then
+          if ls ${{ inputs.results-directory }}/**/coverage*.xml 1> /dev/null 2>&1; then
+            echo "📈 Coverage files created"
+            ls -la ${{ inputs.results-directory }}/**/coverage*.xml
+          else
+            echo "⚠️ No coverage files found"
+          fi
+        fi

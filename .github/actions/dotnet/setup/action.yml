@@ -1,0 +1,41 @@
+name: 'Setup .NET'
+description: 'Setup .NET SDK with caching for consistent builds'
+inputs:
+  dotnet-version:
+    description: '.NET SDK version'
+    required: false
+    default: '9.0.x'
+  include-prerelease:
+    description: 'Include prerelease versions'
+    required: false
+    default: 'false'
+  enable-caching:
+    description: 'Enable NuGet package caching'
+    required: false
+    default: 'true'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Setup .NET SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ inputs.dotnet-version }}
+        include-prerelease: ${{ inputs.include-prerelease }}
+    
+    - name: Cache NuGet packages
+      if: inputs.enable-caching == 'true'
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/packages.lock.json', '**/*.csproj', '**/Directory.Packages.props') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+    
+    - name: Display .NET info
+      shell: bash
+      run: |
+        echo "📦 .NET SDK Information:"
+        dotnet --version
+        dotnet --list-sdks
+        echo "Cache enabled: ${{ inputs.enable-caching }}"

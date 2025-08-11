@@ -1,0 +1,15 @@
+{
+  "name": ".NET Library CI/CD Workflow",
+  "description": "Specialized workflow for .NET libraries with comprehensive testing across multiple .NET versions and NuGet package publishing.",
+  "iconName": "package",
+  "categories": [
+    "CI",
+    "deployment",
+    "dotnet",
+    "library"
+  ],
+  "filePatterns": [
+    "*.csproj",
+    "*.sln"
+  ]
+}

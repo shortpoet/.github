@@ -1,0 +1,50 @@
+# .NET CI/CD Template
+# This template provides basic CI/CD for .NET projects using the central .github repository
+
+name: .NET CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  release:
+    types: [ published ]
+
+env:
+  DOTNET_VERSION: '9.0.x'  # Update as needed
+  PROJECT_PATH: './src/YourProject.csproj'  # Update to your project path
+  
+jobs:
+  build-and-test:
+    uses: shortpoet/.github/.github/workflows/dotnet-ci.yml@dotnet
+    with:
+      # Required
+      project-path: ${{ env.PROJECT_PATH }}
+      
+      # Build configuration
+      dotnet-version: ${{ env.DOTNET_VERSION }}
+      configuration: 'Release'
+      create-package: ${{ github.event_name == 'release' }}
+      version-suffix: ${{ github.event_name != 'release' && 'preview' || '' }}
+      
+      # Testing
+      run-tests: true
+      collect-coverage: true
+      # test-filter: 'Category!=Integration'  # Uncomment to filter tests
+      
+      # Publishing (only on release)
+      publish-packages: ${{ github.event_name == 'release' }}
+      publish-source: 'github'  # Options: github, nuget, azure, all
+      skip-duplicate: true
+      
+      # Advanced options
+      enable-caching: true
+      verbosity: 'normal'
+    
+    secrets: inherit
+      
+      # Add these secrets in your repository settings if publishing to external sources:
+      # NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+      # AZURE_FEED_URL: ${{ secrets.AZURE_FEED_URL }}
+      # AZURE_PAT: ${{ secrets.AZURE_PAT }}

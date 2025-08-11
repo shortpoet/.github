@@ -1,0 +1,45 @@
+# .NET Matrix Build Template
+# This template tests your .NET project across multiple versions and operating systems
+
+name: .NET Matrix Build
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Run weekly to catch compatibility issues
+    - cron: '0 0 * * 0'
+
+env:
+  PROJECT_PATH: './src/YourProject.csproj'  # Update to your project path
+
+jobs:
+  matrix-test:
+    uses: shortpoet/.github/.github/workflows/dotnet-matrix.yml@main
+    with:
+      # Required
+      project-path: ${{ env.PROJECT_PATH }}
+      
+      # Matrix dimensions - customize as needed
+      dotnet-versions: '["8.0.x", "9.0.x"]'
+      operating-systems: '["ubuntu-latest", "windows-latest", "macos-latest"]'
+      configurations: '["Debug", "Release"]'
+      
+      # Matrix control
+      fail-fast: false  # Continue testing other combinations if one fails
+      max-parallel: 6   # Limit concurrent jobs to avoid resource issues
+      
+      # Build options
+      create-package: true  # Only creates on ubuntu-latest/Release
+      # version-suffix: 'matrix-test'  # Uncomment to add version suffix
+      
+      # Testing options
+      run-tests: true
+      collect-coverage: true
+      # test-filter: 'Category!=Integration'  # Uncomment to filter tests
+      
+      # Advanced options
+      include-prerelease: false
+      verbosity: 'normal'

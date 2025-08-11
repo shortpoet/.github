@@ -1,0 +1,16 @@
+{
+  "name": ".NET CI/CD Workflow",
+  "description": "Complete CI/CD pipeline for .NET projects with build, test, and package publishing capabilities.",
+  "iconName": "dotnet",
+  "categories": [
+    "CI",
+    "deployment",
+    "dotnet"
+  ],
+  "filePatterns": [
+    "*.csproj",
+    "*.sln",
+    "*.fsproj",
+    "*.vbproj"
+  ]
+}
