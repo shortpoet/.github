@@ -31,6 +31,11 @@ on:
         description: 'Specifies the GitHub organization for terraform modules.'
         required: false
         type: string
+      tf_version:
+        description: 'Terraform version for every plan and apply job, e.g. 1.16.1. Default=latest.'
+        required: false
+        type: string
+        default: latest
 
 permissions:
   contents: read
@@ -78,6 +83,7 @@ jobs:
       build_artifact: ${{ inputs.build_artifact }}
       build_artifact_uuid: ${{ inputs.build_artifact_uuid }}
       module_org: ${{ inputs.module_org }}
+      tf_version: ${{ inputs.tf_version }}
 
   apply-dev:
     if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
@@ -93,6 +99,7 @@ jobs:
       build_artifact: ${{ inputs.build_artifact }}
       build_artifact_uuid: ${{ inputs.build_artifact_uuid }}
       module_org: ${{ inputs.module_org }}
+      tf_version: ${{ inputs.tf_version }}
 
   plan-uat:
     if: |
@@ -112,6 +119,7 @@ jobs:
       build_artifact: ${{ inputs.build_artifact }}
       build_artifact_uuid: ${{ inputs.build_artifact_uuid }}
       module_org: ${{ inputs.module_org }}
+      tf_version: ${{ inputs.tf_version }}
 
   apply-uat:
     if: |
@@ -129,6 +137,7 @@ jobs:
       build_artifact: ${{ inputs.build_artifact }}
       build_artifact_uuid: ${{ inputs.build_artifact_uuid }}
       module_org: ${{ inputs.module_org }}
+      tf_version: ${{ inputs.tf_version }}
 
   plan-prod:
     if: |
@@ -147,6 +156,7 @@ jobs:
       build_artifact: ${{ inputs.build_artifact }}
       build_artifact_uuid: ${{ inputs.build_artifact_uuid }}
       module_org: ${{ inputs.module_org }}
+      tf_version: ${{ inputs.tf_version }}
 
   apply-prod:
     if: |
@@ -165,3 +175,4 @@ jobs:
       build_artifact: ${{ inputs.build_artifact }}
       build_artifact_uuid: ${{ inputs.build_artifact_uuid }}
       module_org: ${{ inputs.module_org }}
+      tf_version: ${{ inputs.tf_version }}

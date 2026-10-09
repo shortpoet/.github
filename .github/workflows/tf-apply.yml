@@ -138,7 +138,7 @@ jobs:
       - name: AWS Credentials
         # uses: ./.github/actions/aws-creds
         # uses: shortpoet/tf-web/.github/actions/aws-creds@main
-        uses: shortpoet/.github/.github/actions/aws-creds@main
+        uses: shortpoet/.github/.github/actions/aws-creds@4e624fd6f232eeaebc2825f4746bf08bfcbed219
         if: inputs.provider == 'aws'
         with:
           aws-profile: ${{ vars.AWS_PROFILE }}
