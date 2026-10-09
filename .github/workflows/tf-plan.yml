@@ -127,7 +127,7 @@ jobs:
       #     sarif_file: tfsec.sarif
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2.0.3
+        uses: hashicorp/setup-terraform@633666f66e0061ca3b725c73b2ec20cd13a8fdd1 # v2.0.3
         with:
           terraform_version: ${{ inputs.tf_version }}
 
