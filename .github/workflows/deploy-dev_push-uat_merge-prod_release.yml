@@ -40,6 +40,7 @@ on:
 permissions:
   contents: read
   pull-requests: write
+  id-token: write
 
 jobs:
   check-tag:
@@ -69,7 +70,7 @@ jobs:
   #         echo "plan_title=$has_tag" >> $GITHUB_OUTPUT
 
   plan-dev:
-    uses: shortpoet/.github/.github/workflows/tf-plan.yml@v0.2.1
+    uses: shortpoet/.github/.github/workflows/tf-plan.yml@v0.3.0
     # uses: shortpoet/tf-web/.github/workflows/tf-plan.yml@main
     # uses: shortpoet/.github/workflows/tf-plan.yml@main
     if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
@@ -87,7 +88,7 @@ jobs:
 
   apply-dev:
     if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
-    uses: shortpoet/.github/.github/workflows/tf-apply.yml@v0.2.1
+    uses: shortpoet/.github/.github/workflows/tf-apply.yml@v0.3.0
     secrets: inherit
     needs: [plan-dev]
     with:
@@ -108,7 +109,7 @@ jobs:
       github.head_ref == 'uat' &&
       github.base_ref == 'main' &&
       github.event_name == 'pull_request')
-    uses: shortpoet/.github/.github/workflows/tf-plan.yml@v0.2.1
+    uses: shortpoet/.github/.github/workflows/tf-plan.yml@v0.3.0
     secrets: inherit
     with:
       provider: ${{ inputs.provider }}
@@ -125,7 +126,7 @@ jobs:
     if: |
       github.ref == 'refs/heads/main' &&
       github.event_name == 'push'
-    uses: shortpoet/.github/.github/workflows/tf-apply.yml@v0.2.1
+    uses: shortpoet/.github/.github/workflows/tf-apply.yml@v0.3.0
     secrets: inherit
     # needs: [plan-uat, apply-dev]
     with:
@@ -143,7 +144,7 @@ jobs:
     if: |
       (needs.check-tag.outputs.has_tag == 'true' &&
       github.event_name == 'release')
-    uses: shortpoet/.github/.github/workflows/tf-plan.yml@v0.2.1
+    uses: shortpoet/.github/.github/workflows/tf-plan.yml@v0.3.0
     secrets: inherit
     needs : [check-tag]
     # needs : [apply-uat, check-tag]
@@ -162,7 +163,7 @@ jobs:
     if: |
       needs.check-tag.outputs.has_tag == 'true' &&
       github.event_name == 'release'
-    uses: shortpoet/.github/.github/workflows/tf-apply.yml@v0.2.1
+    uses: shortpoet/.github/.github/workflows/tf-apply.yml@v0.3.0
     secrets: inherit
     # needs : [check-tag]
     needs : [plan-prod, check-tag]

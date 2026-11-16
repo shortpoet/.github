@@ -47,6 +47,9 @@ jobs:
     name: apply-${{ inputs.gh_environment }}
     runs-on: ubuntu-latest
     environment: ${{ inputs.gh_environment }}
+    permissions:
+      contents: read
+      id-token: write
     defaults:
       run:
         shell: bash
@@ -138,14 +141,12 @@ jobs:
       - name: AWS Credentials
         # uses: ./.github/actions/aws-creds
         # uses: shortpoet/tf-web/.github/actions/aws-creds@main
-        uses: shortpoet/.github/.github/actions/aws-creds@4e624fd6f232eeaebc2825f4746bf08bfcbed219
+        uses: shortpoet/.github/.github/actions/aws-creds@d65e80c379a6e3070e6628e08110a5079372a569
         if: inputs.provider == 'aws'
         with:
           aws-profile: ${{ vars.AWS_PROFILE }}
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           aws-region: ${{ vars.AWS_DEFAULT_REGION }}
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           role-duration-seconds: 1200
 
       - name: Setup Terraform
