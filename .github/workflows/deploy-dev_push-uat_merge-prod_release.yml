@@ -69,7 +69,7 @@ jobs:
   #         echo "plan_title=$has_tag" >> $GITHUB_OUTPUT
 
   plan-dev:
-    uses: ./.github/workflows/tf-plan.yml
+    uses: shortpoet/.github/.github/workflows/tf-plan.yml@v0.2.1
     # uses: shortpoet/tf-web/.github/workflows/tf-plan.yml@main
     # uses: shortpoet/.github/workflows/tf-plan.yml@main
     if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
@@ -87,7 +87,7 @@ jobs:
 
   apply-dev:
     if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
-    uses: ./.github/workflows/tf-apply.yml
+    uses: shortpoet/.github/.github/workflows/tf-apply.yml@v0.2.1
     secrets: inherit
     needs: [plan-dev]
     with:
@@ -108,7 +108,7 @@ jobs:
       github.head_ref == 'uat' &&
       github.base_ref == 'main' &&
       github.event_name == 'pull_request')
-    uses: ./.github/workflows/tf-plan.yml
+    uses: shortpoet/.github/.github/workflows/tf-plan.yml@v0.2.1
     secrets: inherit
     with:
       provider: ${{ inputs.provider }}
@@ -125,7 +125,7 @@ jobs:
     if: |
       github.ref == 'refs/heads/main' &&
       github.event_name == 'push'
-    uses: ./.github/workflows/tf-apply.yml
+    uses: shortpoet/.github/.github/workflows/tf-apply.yml@v0.2.1
     secrets: inherit
     # needs: [plan-uat, apply-dev]
     with:
@@ -143,7 +143,7 @@ jobs:
     if: |
       (needs.check-tag.outputs.has_tag == 'true' &&
       github.event_name == 'release')
-    uses: ./.github/workflows/tf-plan.yml
+    uses: shortpoet/.github/.github/workflows/tf-plan.yml@v0.2.1
     secrets: inherit
     needs : [check-tag]
     # needs : [apply-uat, check-tag]
@@ -162,7 +162,7 @@ jobs:
     if: |
       needs.check-tag.outputs.has_tag == 'true' &&
       github.event_name == 'release'
-    uses: ./.github/workflows/tf-apply.yml
+    uses: shortpoet/.github/.github/workflows/tf-apply.yml@v0.2.1
     secrets: inherit
     # needs : [check-tag]
     needs : [plan-prod, check-tag]
