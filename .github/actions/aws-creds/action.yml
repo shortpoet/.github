@@ -34,4 +34,10 @@ runs:
       shell: bash
       env:
         AWS_PROFILE: ${{ inputs.aws-profile }}
-      run: aws sts get-caller-identity --query Arn --output text
+      # Only the role part: named-profile mode registers no account-id mask.
+      run: |
+        arn=$(aws sts get-caller-identity --query Arn --output text)
+        case "$arn" in
+          *:assumed-role/*) echo "assumed-role/${arn#*:assumed-role/}" ;;
+          *) echo "signed in as an identity that is not an assumed role"; exit 1 ;;
+        esac
