@@ -47,11 +47,17 @@ jobs:
     name: apply-${{ inputs.gh_environment }}
     runs-on: ubuntu-latest
     environment: ${{ inputs.gh_environment }}
+    # actions: read lets the UAT steps download an earlier run's artifacts.
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
     defaults:
       run:
         shell: bash
         working-directory: ${{ inputs.path }}
     env:
+      THIS_REPO: ${{ github.repository }}
       TF_LOG: TRACE
       TF_LOG_PATH: tf.log
       TF_IN_AUTOMATION: true
@@ -69,8 +75,6 @@ jobs:
         shell: sh
 
       - name: Download Terraform Artifact
-        env:
-          THIS_REPO: ${{ github.repository }}
         if: inputs.gh_environment != 'uat'
         uses: actions/download-artifact@v4
         with:
@@ -138,14 +142,12 @@ jobs:
       - name: AWS Credentials
         # uses: ./.github/actions/aws-creds
         # uses: shortpoet/tf-web/.github/actions/aws-creds@main
-        uses: shortpoet/.github/.github/actions/aws-creds@4e624fd6f232eeaebc2825f4746bf08bfcbed219
+        uses: shortpoet/.github/.github/actions/aws-creds@066b22bb4e14be1e69e3614eb86431d5d5ce72de
         if: inputs.provider == 'aws'
         with:
           aws-profile: ${{ vars.AWS_PROFILE }}
           role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           aws-region: ${{ vars.AWS_DEFAULT_REGION }}
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           role-duration-seconds: 1200
 
       - name: Setup Terraform
