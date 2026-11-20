@@ -37,10 +37,9 @@ on:
         type: string
         default: latest
 
+# Each plan and apply job grants what its called workflow needs; nothing else gets id-token.
 permissions:
   contents: read
-  pull-requests: write
-  id-token: write
 
 jobs:
   check-tag:
@@ -71,6 +70,10 @@ jobs:
 
   plan-dev:
     uses: shortpoet/.github/.github/workflows/tf-plan.yml@v0.3.0
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
     # uses: shortpoet/tf-web/.github/workflows/tf-plan.yml@main
     # uses: shortpoet/.github/workflows/tf-plan.yml@main
     if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
@@ -89,6 +92,10 @@ jobs:
   apply-dev:
     if: github.ref == 'refs/heads/develop' && github.event_name == 'push'
     uses: shortpoet/.github/.github/workflows/tf-apply.yml@v0.3.0
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
     secrets: inherit
     needs: [plan-dev]
     with:
@@ -110,6 +117,10 @@ jobs:
       github.base_ref == 'main' &&
       github.event_name == 'pull_request')
     uses: shortpoet/.github/.github/workflows/tf-plan.yml@v0.3.0
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
     secrets: inherit
     with:
       provider: ${{ inputs.provider }}
@@ -127,6 +138,10 @@ jobs:
       github.ref == 'refs/heads/main' &&
       github.event_name == 'push'
     uses: shortpoet/.github/.github/workflows/tf-apply.yml@v0.3.0
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
     secrets: inherit
     # needs: [plan-uat, apply-dev]
     with:
@@ -145,6 +160,10 @@ jobs:
       (needs.check-tag.outputs.has_tag == 'true' &&
       github.event_name == 'release')
     uses: shortpoet/.github/.github/workflows/tf-plan.yml@v0.3.0
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
     secrets: inherit
     needs : [check-tag]
     # needs : [apply-uat, check-tag]
@@ -164,6 +183,10 @@ jobs:
       needs.check-tag.outputs.has_tag == 'true' &&
       github.event_name == 'release'
     uses: shortpoet/.github/.github/workflows/tf-apply.yml@v0.3.0
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
     secrets: inherit
     # needs : [check-tag]
     needs : [plan-prod, check-tag]

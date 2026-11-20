@@ -47,14 +47,17 @@ jobs:
     name: apply-${{ inputs.gh_environment }}
     runs-on: ubuntu-latest
     environment: ${{ inputs.gh_environment }}
+    # actions: read lets the UAT steps download an earlier run's artifacts.
     permissions:
       contents: read
+      actions: read
       id-token: write
     defaults:
       run:
         shell: bash
         working-directory: ${{ inputs.path }}
     env:
+      THIS_REPO: ${{ github.repository }}
       TF_LOG: TRACE
       TF_LOG_PATH: tf.log
       TF_IN_AUTOMATION: true
@@ -72,8 +75,6 @@ jobs:
         shell: sh
 
       - name: Download Terraform Artifact
-        env:
-          THIS_REPO: ${{ github.repository }}
         if: inputs.gh_environment != 'uat'
         uses: actions/download-artifact@v4
         with:
@@ -141,7 +142,7 @@ jobs:
       - name: AWS Credentials
         # uses: ./.github/actions/aws-creds
         # uses: shortpoet/tf-web/.github/actions/aws-creds@main
-        uses: shortpoet/.github/.github/actions/aws-creds@d65e80c379a6e3070e6628e08110a5079372a569
+        uses: shortpoet/.github/.github/actions/aws-creds@066b22bb4e14be1e69e3614eb86431d5d5ce72de
         if: inputs.provider == 'aws'
         with:
           aws-profile: ${{ vars.AWS_PROFILE }}
